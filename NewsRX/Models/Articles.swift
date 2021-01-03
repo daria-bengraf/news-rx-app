@@ -9,6 +9,7 @@
 import Foundation
 import ObjectMapper
 import CoreData
+import RxDataSources
 
 class Articles: Mappable{
     var articles: [Article] = []
@@ -57,11 +58,11 @@ final class Article: NSManagedObject {
     
 }
 
-extension Article: Mappable {
-    
+extension Article: Mappable, Identifiable {
     public convenience init?(map: Map) {
         let context = CoreDataStack.instance.managedContext
         let entity = NSEntityDescription.entity(forEntityName: "Article", in: context)
+
         self.init(entity: entity!, insertInto: context)
         self.uuid = UUID()
     }
@@ -71,6 +72,11 @@ extension Article: Mappable {
         text <- map["description"]
         urlToImage <- map["urlToImage"]
     }
+}
+
+
+extension Article: IdentifiableType {
+    public var identity: String { return UUID.init().uuidString }
 }
 
 

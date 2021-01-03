@@ -13,7 +13,7 @@ import CoreData
 
 class ArticlesViewModel {
     
-    var articlesVM : Observable<[ArticlesSection]> = Observable.empty()
+    var articlesVM : Observable<[ArticlesSectionTest]> = Observable.empty()
     var apiService: PublishSubject<Void> = PublishSubject()
     var coreDataService: PublishSubject<Void> = PublishSubject()
     var pageNum : Int = 0
@@ -30,7 +30,7 @@ class ArticlesViewModel {
         self.apiService.onNext(())
     }
     
-    private func setupCoredataService() -> Observable<[ArticlesSection]> {
+    private func setupCoredataService() -> Observable<[ArticlesSectionTest]> {
         return self.coreDataService
             .observeOn(ConcurrentDispatchQueueScheduler(qos: .background))
             .map { Article.fetch() }
@@ -44,12 +44,13 @@ class ArticlesViewModel {
                     self.loadMore()
                 }
             })
-            .map { (articles: [Article]) in
-                return [ArticlesSection(articleModels: articles)]
-            }
-    }
+            .map {(articles: [Article]) in
+                    return [ArticlesSectionTest(header: "_", articles: articles)]
+                }}
+        
     
-    
+        
+        
     private func setupApiService() -> Void {
         self.apiService
         .subscribeOn(ConcurrentDispatchQueueScheduler(qos: .background))
