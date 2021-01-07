@@ -31,6 +31,7 @@ class ArticlesViewModel {
     }
     
     private func setupCoredataService() -> Observable<[ArticlesSectionTest]> {
+        
         return self.coreDataService
             .observeOn(ConcurrentDispatchQueueScheduler(qos: .background))
             .map { Article.fetch() }
@@ -45,8 +46,8 @@ class ArticlesViewModel {
                 }
             })
             .map {(articles: [Article]) in
-                    return [ArticlesSectionTest(header: "_", articles: articles)]
-                }}
+                return [ArticlesSectionTest(header: "_", articles: articles)]
+            }}
         
     
         

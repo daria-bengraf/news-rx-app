@@ -17,9 +17,6 @@ class NewsListTestController: UIViewController {
     let disposeBag = DisposeBag()
     private let reuseIdentifier = "Cell"
     private var articlesViewModel = ArticlesViewModel()
-    //private var articleViewModel: ArticleViewModel
-    private var articlesSections  = [ArticlesSectionTest]()
-    private var isLoading = false
     private var dataSource: RxTableViewSectionedReloadDataSource<ArticlesSectionTest>!
     
     var mainScrollView: UIScrollView = {
@@ -42,7 +39,10 @@ class NewsListTestController: UIViewController {
         articlesViewModel.articlesVM
             .observeOn(MainScheduler.instance)
             .bind(to: tableView.rx.items(dataSource: dataSource))
-            
+            .disposed(by: disposeBag)
+        
+        tableView.rx.lazyLoadNeeded
+            .bind(to: articlesViewModel.coreDataService)
             .disposed(by: disposeBag)
         
     }
@@ -50,6 +50,8 @@ class NewsListTestController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        
         
         dataSource = RxTableViewSectionedReloadDataSource<ArticlesSectionTest>(configureCell: { [weak self] dataSource, table, indexPath, article in
             guard let self = self else { return UITableViewCell() }
@@ -76,9 +78,6 @@ class NewsListTestController: UIViewController {
         setupViews()
         
         articlesViewModel.coreDataService.onNext(())
-        
-        
-        
     }
     
     

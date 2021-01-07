@@ -69,7 +69,6 @@ class ArticleViewModel {
                         self.articleModel.image = imageData
                         CoreDataStack.instance.saveContext()
                         self.imageProvider.onNext(imageData)
-                        
                     })
                     .disposed(by: self.disposeBag)
                 
