@@ -63,7 +63,7 @@ class ArticleViewModel {
                 
                 self.imageService
                     .load(url: url)
-                    .observeOn(MainScheduler.instance)
+                    .observeOn(ConcurrentDispatchQueueScheduler.init(qos: .background))
                     .subscribe(onNext: { [weak self] (imageData: Data) -> Void in
                         guard let self = self else { return }
                         self.articleModel.image = imageData

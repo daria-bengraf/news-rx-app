@@ -39,6 +39,6 @@ class ImageService {
                 request.cancel()
             }
         }
-        .observeOn(MainScheduler.instance)
+        .observeOn(ConcurrentDispatchQueueScheduler.init(qos: .background))
     }
 }
