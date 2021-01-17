@@ -9,6 +9,7 @@
 import Foundation
 import ObjectMapper
 import CoreData
+import RxDataSources
 
 class Articles: Mappable{
     var articles: [Article] = []
@@ -30,38 +31,40 @@ final class Article: NSManagedObject {
     @NSManaged public var text: String?
     @NSManaged public var urlToImage: String?
     @NSManaged public var image: Data?
-    
+        
     @nonobjc static func fetchRequest() -> NSFetchRequest<Article> {
         return NSFetchRequest<Article>(entityName: "Article")
     }
     
     static func fetch() -> [Article] {
         do {
-            return try CoreDataStack.instance.managedContext.fetch(fetchRequest())
+            let fetchResultController = ArticlesFetchResultService.instance.fetchResultController            
+            guard let result = fetchResultController?.fetchedObjects else { throw NSError() }
+            return result
         } catch let error as NSError {
             print("Could not fetch. \(error), \(error.userInfo)")
             return []
         }
     }
     
-    static func fetchOne(uuid: UUID) -> Article? {
+    static func fetchSections() -> [NSFetchedResultsSectionInfo] {
         do {
-            let request: NSFetchRequest<Article> = fetchRequest()
-            request.predicate = NSPredicate(format: "uuid == %@", uuid.uuidString.lowercased())
-            return try CoreDataStack.instance.managedContext.fetch(request).first
+            let fetchResultController = ArticlesFetchResultService.instance.fetchResultController
+            guard let result = fetchResultController?.sections else { throw NSError() }
+            return result
         } catch let error as NSError {
             print("Could not fetch. \(error), \(error.userInfo)")
-            return nil
+            return []
         }
     }
     
 }
 
-extension Article: Mappable {
-    
+extension Article: Mappable, Identifiable {
     public convenience init?(map: Map) {
         let context = CoreDataStack.instance.managedContext
         let entity = NSEntityDescription.entity(forEntityName: "Article", in: context)
+
         self.init(entity: entity!, insertInto: context)
         self.uuid = UUID()
     }
@@ -71,6 +74,11 @@ extension Article: Mappable {
         text <- map["description"]
         urlToImage <- map["urlToImage"]
     }
+}
+
+
+extension Article: IdentifiableType {
+    public var identity: String { return UUID.init().uuidString }
 }
 
 

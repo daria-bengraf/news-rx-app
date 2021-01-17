@@ -7,13 +7,17 @@
 //
 
 import Foundation
+
+
 struct ArticlesSection {
-    var articleViewModels = [ArticleViewModel]()
+ var articleViewModels = [ArticleViewModel]()
     
-    init(articleModels: [Article]) {
+init(articleModels: [Article]) {
         
-        articleViewModels = articleModels.compactMap { (article: Article) in
-            return ArticleViewModel(article)
-        }
-    }
+   articleViewModels = articleModels.compactMap { (article: Article) in
+           return ArticleViewModel(article)
 }
+ }
+}
+
+

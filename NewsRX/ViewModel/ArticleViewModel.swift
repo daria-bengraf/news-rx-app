@@ -22,26 +22,30 @@ class ArticleViewModel {
     
     init( _ articleModel: Article) {
         self.articleModel = articleModel
-        self.setupImagePublisher()
-        image = self.setupImageProvider()
+        setupImagePublisher()
+        image = setupImageProvider()
         imageProvider.onNext(articleModel.image)
     }
     
     private func setupImageProvider() -> Observable<UIImage?> {
-        let observableData =  self.imageProvider
-            .do(onNext: { [weak self] (data: Data?) in
+        imageProvider
+            .subscribe(onNext: { [weak self] (data: Data?) in
                 guard let self = self else { return }
                 
                 if data == nil {
                     self.imagePublisher.onNext(())
                 }
             })
+            .disposed(by: disposeBag)
+        
+        return imageProvider.map { (data) -> UIImage? in
+            guard let data = data else {
+                return UIImage(named: "Image")
                 
-        return observableData.map { (data: Data?) -> UIImage? in
-            guard let data = data else { return UIImage(named: "Image") }
+            }
             return UIImage(data: data)
         }
-
+        
     }
     
     func buildImage(data: Data?) -> UIImage? {
@@ -56,15 +60,15 @@ class ArticleViewModel {
                 guard let imageUrlString = self.articleModel.urlToImage else { return }
                 guard let url = URL(string: imageUrlString) else { return }
                 
+                
                 self.imageService
                     .load(url: url)
-                    .observeOn(MainScheduler.instance)
-                    .bind(onNext: { [weak self] (imageData: Data) -> Void in
+                    .observeOn(ConcurrentDispatchQueueScheduler.init(qos: .background))
+                    .subscribe(onNext: { [weak self] (imageData: Data) -> Void in
                         guard let self = self else { return }
                         self.articleModel.image = imageData
                         CoreDataStack.instance.saveContext()
                         self.imageProvider.onNext(imageData)
-                        
                     })
                     .disposed(by: self.disposeBag)
                 

@@ -10,7 +10,7 @@ import UIKit
 import RxSwift
 import RxCocoa
 import CoreData
-
+import RxDataSources
 class NewsListController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIScrollViewDelegate  {
     
     let disposeBag = DisposeBag()
@@ -62,33 +62,31 @@ class NewsListController: UIViewController, UITableViewDataSource, UITableViewDe
         articleVM.image.asDriver(onErrorJustReturn: UIImage())
             .drive(cell.newsImageView.rx.image)
             .disposed(by: disposeBag)
-        
-        articleVM.imageProvider.onNext(articleVM.articleModel.image)
-        
+                
         return cell
     }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        self.tableView.register(NewsCell.self, forCellReuseIdentifier: reuseIdentifier)
-        self.tableView.dataSource = self
-        self.mainScrollView.delegate = self
-        self.tableView.delegate = self
-        setupViews()
-        
-        articlesViewModel
-            .articlesVM
-            .observeOn(MainScheduler.instance)
-            .bind(onNext: { (articlesSections: [ArticlesSection]) -> Void in
-                self.articlesSections = articlesSections
-                self.reloadTableView()
-                self.isLoading = false
-            })
-            .disposed(by: disposeBag)
-        
-        articlesViewModel.coreDataService.onNext(())
-    }
+//    override func viewDidLoad() {
+//        super.viewDidLoad()
+//
+//        self.tableView.register(NewsCell.self, forCellReuseIdentifier: reuseIdentifier)
+//        self.tableView.dataSource = self
+//        self.mainScrollView.delegate = self
+//        self.tableView.delegate = self
+//        setupViews()
+//
+//        articlesViewModel
+//            .articlesVM
+//            .observeOn(MainScheduler.instance)
+//            .bind(onNext: { (articlesSections: [ArticlesSectionTest]) -> Void in
+//                self.articlesSections = articlesSections
+//                self.reloadTableView()
+//                self.isLoading = false
+//            })
+//            .disposed(by: disposeBag)
+//
+//        articlesViewModel.coreDataService.onNext(())
+//    }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let height = scrollView.frame.size.height
@@ -122,17 +120,26 @@ class NewsListController: UIViewController, UITableViewDataSource, UITableViewDe
     }
     
     private func addConstraints () {
-        mainScrollView.translatesAutoresizingMaskIntoConstraints = false
-        mainScrollView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
-        mainScrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
-        mainScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        mainScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+        //mainScrollView.translatesAutoresizingMaskIntoConstraints = false
+       // mainScrollView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+       // mainScrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+       // mainScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+      //  mainScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
-        tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
-        tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        mainScrollView.snp.makeConstraints { make in
+            make.top.trailing.leading.bottom.equalToSuperview()
+        }
+        
+        //tableView.translatesAutoresizingMaskIntoConstraints = false
+        //tableView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+        //tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        //tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+       // tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        
+        tableView.snp.makeConstraints { make in
+            make.top.leading.trailing.bottom.equalToSuperview()
+        }
+        
     }
     
 }

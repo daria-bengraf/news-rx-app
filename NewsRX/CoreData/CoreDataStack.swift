@@ -19,7 +19,7 @@ public class CoreDataStack {
         return CoreDataStack(modelName: "NewsRX")
     }()
     
-   init(modelName: String,  usesFatalError: Bool = false) {
+    init(modelName: String,  usesFatalError: Bool = false) {
         self.modelName = modelName
         self.usesFatalError = usesFatalError
     }

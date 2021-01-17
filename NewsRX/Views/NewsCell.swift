@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import SnapKit
 
 class NewsCell: UITableViewCell {
     
@@ -38,7 +39,6 @@ class NewsCell: UITableViewCell {
         addSubview(descriptionLabel)
         addSubview(articleLabel)
         addSubview(newsImageView)
-        
         addConstraints()
     }
     
@@ -47,22 +47,29 @@ class NewsCell: UITableViewCell {
     }
     
     func addConstraints() {
-        newsImageView.translatesAutoresizingMaskIntoConstraints = false
-        newsImageView.topAnchor.constraint(equalTo: topAnchor, constant: 20).isActive = true
-        newsImageView.leftAnchor.constraint(equalTo: leftAnchor, constant: 20).isActive = true
-        newsImageView.rightAnchor.constraint(equalTo: rightAnchor, constant: -20).isActive = true
-        newsImageView.heightAnchor.constraint(equalToConstant: 200).isActive = true
-
-        descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
-        descriptionLabel.topAnchor.constraint(equalTo: newsImageView.bottomAnchor, constant: 50).isActive = true
-        descriptionLabel.leftAnchor.constraint(equalTo: leftAnchor,  constant: 20).isActive = true
-        descriptionLabel.rightAnchor.constraint(equalTo: rightAnchor, constant: -20).isActive = true
         
-        articleLabel.translatesAutoresizingMaskIntoConstraints = false
-        articleLabel.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 15).isActive = true
-        articleLabel.leftAnchor.constraint(equalTo: leftAnchor,  constant: 20).isActive = true
-        articleLabel.rightAnchor.constraint(equalTo: rightAnchor, constant: -20).isActive = true
-        articleLabel.bottomAnchor.constraint(equalTo: bottomAnchor,  constant: -20).isActive = true
+        newsImageView.snp.makeConstraints { make in
+           make.top.equalToSuperview().offset(20)
+           make.leading.equalToSuperview().offset(20)
+           make.trailing.equalToSuperview().offset(-20)
+           make.height.equalTo(200)
+        }
+        
+        // Вопрос: почему после переезда на снапкит едет вёрстка у некоторых заголовков?
+        
+        descriptionLabel.snp.makeConstraints { make in
+           make.top.equalTo(newsImageView.snp.bottom).offset(50)
+           make.leading.equalToSuperview().offset(20)
+           make.trailing.equalToSuperview().offset(-20)
+        }
+        
+        articleLabel.snp.makeConstraints { make in
+            make.top.equalTo(descriptionLabel.snp.bottom).offset(15)
+            make.leading.equalToSuperview().offset(20)
+            make.trailing.bottom.equalToSuperview().offset(-20)
+    
+        }
+        
     }
     
 }

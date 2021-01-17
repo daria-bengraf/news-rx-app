@@ -15,9 +15,16 @@ class ImageService {
     
     public func load (url: URL) -> Observable<Data> {
         return Observable<Data>.create { observer in
+            // Попытка излечить ошибку HTTP load failed, 0/0 bytes (error code: -999 [1:89])
+            let configuration = URLSessionConfiguration.default
+            configuration.urlCredentialStorage = nil
+            configuration.timeoutIntervalForRequest = 100
+            configuration.httpMaximumConnectionsPerHost = 10
             
-            let request = Alamofire
+            let manager = Alamofire.SessionManager(configuration: configuration)
+            let request = manager
                 .request(url)
+                .validate()
                 .responseData{ response  in
                     switch response.result {
                     case .success(let responseData):
@@ -32,5 +39,6 @@ class ImageService {
                 request.cancel()
             }
         }
+        .observeOn(ConcurrentDispatchQueueScheduler.init(qos: .background))
     }
 }
