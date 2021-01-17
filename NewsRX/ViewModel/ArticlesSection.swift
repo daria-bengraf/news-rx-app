@@ -2,22 +2,31 @@
 //  ArticlesSection.swift
 //  NewsRX
 //
-//  Created by Dariya Bengraf on 02.11.2020.
-//  Copyright © 2020 Dariya Bengraf. All rights reserved.
+//  Created by Dariya Bengraf on 10.01.2021.
+//  Copyright © 2021 Dariya Bengraf. All rights reserved.
 //
 
 import Foundation
+import RxDataSources
 
 
-struct ArticlesSection {
- var articleViewModels = [ArticleViewModel]()
+struct ArticleSection {
+    var header: String
+    var articles: [Article]
+}
+
+extension ArticleSection: AnimatableSectionModelType {
+    var items: [Article] { return articles }
     
-init(articleModels: [Article]) {
-        
-   articleViewModels = articleModels.compactMap { (article: Article) in
-           return ArticleViewModel(article)
-}
- }
+    var identity : String { return UUID().uuidString }
+    
+    init(original: ArticleSection, items: [Article]) {
+        self = original
+        self.articles = items
+    }
 }
 
 
+extension ArticleSection: Hashable {
+    
+}

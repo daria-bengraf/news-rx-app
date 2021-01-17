@@ -1,5 +1,5 @@
 //
-//  NewsListTestController.swift
+//  NewsListController.swift
 //  NewsRX
 //
 //  Created by Dariya Bengraf on 15.12.2020.
@@ -17,47 +17,15 @@ class NewsListTestController: UIViewController {
     let disposeBag = DisposeBag()
     private let reuseIdentifier = "Cell"
     private var articlesViewModel = ArticlesViewModel()
-    private var dataSource: RxTableViewSectionedReloadDataSource<ArticlesSectionTest>!
+    private var sections: [ArticleSection] = []
     
-    var mainScrollView: UIScrollView = {
-        let mainScrollView = UIScrollView()
-        mainScrollView.backgroundColor = .black
-        mainScrollView.isScrollEnabled = true
-        
-        return mainScrollView
-    }()
-    
-    let tableView : UITableView = {
-        let tableView = UITableView(frame: .zero, style: .plain)
-        tableView.register(NewsCell.self, forCellReuseIdentifier: "Cell")
-        tableView.isScrollEnabled = true
-        return tableView;
-    }()
-    
-    
-    func bindToTable() {
-        articlesViewModel.articlesVM
-            .observeOn(MainScheduler.instance)
-            .bind(to: tableView.rx.items(dataSource: dataSource))
-            .disposed(by: disposeBag)
-        
-        tableView.rx.lazyLoadNeeded
-            .bind(to: articlesViewModel.coreDataService)
-            .disposed(by: disposeBag)
-        
-    }
-    
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        
-        
-        dataSource = RxTableViewSectionedReloadDataSource<ArticlesSectionTest>(configureCell: { [weak self] dataSource, table, indexPath, article in
+    private var configureCell: RxTableViewSectionedAnimatedDataSource<ArticleSection>.ConfigureCell {
+        return { [weak self] _, tableView, indexPath, article in
             guard let self = self else { return UITableViewCell() }
-            guard let cell = table.dequeueReusableCell(withIdentifier: self.reuseIdentifier) as? NewsCell else { return UITableViewCell()}
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: self.reuseIdentifier) as? NewsCell else { return UITableViewCell()}
+            
             let articleVM = ArticleViewModel(article)
-                        
+            
             articleVM.title.asDriver(onErrorJustReturn:"")
                 .drive(cell.descriptionLabel.rx.text)
                 .disposed(by: self.disposeBag)
@@ -69,26 +37,77 @@ class NewsListTestController: UIViewController {
             articleVM.image.asDriver(onErrorJustReturn: UIImage())
                 .drive(cell.newsImageView.rx.image)
                 .disposed(by: self.disposeBag)
-        
-            return cell
             
-        })
+            return cell
+        }
+    }
+    
+    private var canEditRowAtIndexPath: RxTableViewSectionedAnimatedDataSource<ArticleSection>.CanEditRowAtIndexPath {
+        return { [unowned self] _, _ in
+            if self.tableView.isEditing {
+                return true
+            } else {
+                return false
+            }
+        }
+    }
+    
+    private var canMoveRowAtIndexPath: RxTableViewSectionedAnimatedDataSource<ArticleSection>.CanMoveRowAtIndexPath {
+        return { _, _ in
+            return true
+        }
+    }
+    
+    let tableView : UITableView = {
+        let tableView = UITableView(frame: .zero, style: .plain)
+        tableView.register(NewsCell.self, forCellReuseIdentifier: "Cell")
+        tableView.isScrollEnabled = true
+        return tableView;
+    }()
+    
+    
+    func bindData() {
+        let data = ArticlesDataObservable(context: CoreDataStack.instance.managedContext)
         
-        bindToTable()
+        let dataSource = RxTableViewSectionedAnimatedDataSource<ArticleSection>(
+            animationConfiguration: AnimationConfiguration(
+                insertAnimation: .none,
+                reloadAnimation: .none,
+                deleteAnimation: .none
+            ),
+            configureCell: configureCell,
+            canEditRowAtIndexPath: canEditRowAtIndexPath,
+            canMoveRowAtIndexPath: canMoveRowAtIndexPath
+        )
+        
+        dataSource.titleForHeaderInSection = { dataSource, index in
+            return dataSource.sectionModels[index].header
+        }
+        
+        
+        data
+            .asDriver(onErrorJustReturn: [])
+            .map{ [ArticleSection(header: String($0.count), articles: $0)] }
+            .drive(tableView.rx.items(dataSource: dataSource))
+            .disposed(by: disposeBag)
+        
+        
+        tableView.rx.lazyLoadNeeded
+            .bind(to: articlesViewModel.withPage(n: data.count() / articlesViewModel.countPerPage).apiService)
+            .disposed(by: disposeBag)
+    }
+    
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        bindData()
         setupViews()
-        
-        articlesViewModel.coreDataService.onNext(())
     }
     
     
     func setupViews() {
         self.navigationItem.title = "Crypto News"
-        view.addSubview(mainScrollView)
         view.addSubview(tableView)
-        
-        mainScrollView.snp.makeConstraints { make in
-            make.top.trailing.leading.bottom.equalToSuperview()
-        }
         
         tableView.snp.makeConstraints { make in
             make.top.leading.trailing.bottom.equalToSuperview()

@@ -24,7 +24,9 @@ class ArticleViewModel {
         self.articleModel = articleModel
         setupImagePublisher()
         image = setupImageProvider()
-        imageProvider.onNext(articleModel.image)
+        
+        // TODO: Fix load image
+        // imageProvider.onNext(articleModel.image)
     }
     
     private func setupImageProvider() -> Observable<UIImage?> {
@@ -63,7 +65,6 @@ class ArticleViewModel {
                 
                 self.imageService
                     .load(url: url)
-                    .observeOn(MainScheduler.instance)
                     .subscribe(onNext: { [weak self] (imageData: Data) -> Void in
                         guard let self = self else { return }
                         self.articleModel.image = imageData

@@ -16,7 +16,7 @@ extension Reactive where Base: UIScrollView {
 
         return self.contentOffset
             .throttle(
-                .seconds(2),
+                .seconds(4),
                 scheduler: MainScheduler.instance
             )
             .flatMap { [weak scrollView] (contentOffset) -> Observable<Void> in

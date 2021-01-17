@@ -31,33 +31,6 @@ final class Article: NSManagedObject {
     @NSManaged public var text: String?
     @NSManaged public var urlToImage: String?
     @NSManaged public var image: Data?
-        
-    @nonobjc static func fetchRequest() -> NSFetchRequest<Article> {
-        return NSFetchRequest<Article>(entityName: "Article")
-    }
-    
-    static func fetch() -> [Article] {
-        do {
-            let fetchResultController = ArticlesFetchResultService.instance.fetchResultController            
-            guard let result = fetchResultController?.fetchedObjects else { throw NSError() }
-            return result
-        } catch let error as NSError {
-            print("Could not fetch. \(error), \(error.userInfo)")
-            return []
-        }
-    }
-    
-    static func fetchSections() -> [NSFetchedResultsSectionInfo] {
-        do {
-            let fetchResultController = ArticlesFetchResultService.instance.fetchResultController
-            guard let result = fetchResultController?.sections else { throw NSError() }
-            return result
-        } catch let error as NSError {
-            print("Could not fetch. \(error), \(error.userInfo)")
-            return []
-        }
-    }
-    
 }
 
 extension Article: Mappable, Identifiable {
