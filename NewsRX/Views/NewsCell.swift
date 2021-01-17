@@ -19,8 +19,6 @@ class NewsCell: UITableViewCell {
     }()
     
     let articleLabel:UILabel = {
-        // TODO: Temp
-        return UILabel()
         let articleLabel = UILabel()
         articleLabel.setContentCompressionResistancePriority(UILayoutPriority(rawValue: 1000), for: NSLayoutConstraint.Axis.vertical)
         articleLabel.numberOfLines = 0
@@ -28,9 +26,6 @@ class NewsCell: UITableViewCell {
     }()
     
     var newsImageView: UIImageView = {
-        // TODO: Temp
-        return UIImageView()
-        
         let iv =  UIImageView()
         iv.contentMode = .scaleAspectFill
         let data = #imageLiteral(resourceName: "placeholder").pngData()!
@@ -42,8 +37,8 @@ class NewsCell: UITableViewCell {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         self.backgroundColor = .white
         addSubview(descriptionLabel)
-//        addSubview(articleLabel)
-//        addSubview(newsImageView)
+        addSubview(articleLabel)
+        addSubview(newsImageView)
         addConstraints()
     }
     
@@ -53,38 +48,25 @@ class NewsCell: UITableViewCell {
     
     func addConstraints() {
         
-//        newsImageView.snp.makeConstraints { make in
-//           make.top.equalToSuperview().offset(20)
-//           make.leading.equalToSuperview().offset(20)
-//           make.trailing.equalToSuperview().offset(-20)
-//           make.height.equalTo(0)
-//        }
-//
-//        // Вопрос: почему после переезда на снапкит едет вёрстка у некоторых заголовков?
-//
-//        descriptionLabel.snp.makeConstraints { make in
-//           make.top.equalTo(newsImageView.snp.bottom).offset(50)
-//           make.leading.equalToSuperview().offset(20)
-//           make.trailing.equalToSuperview().offset(-20)
-//        }
-//
-//        articleLabel.snp.makeConstraints { make in
-//            make.top.equalTo(descriptionLabel.snp.bottom).offset(15)
-//            make.leading.equalToSuperview().offset(20)
-//            make.trailing.bottom.equalToSuperview().offset(-20)
-//
-//        }
-            
-            // Вопрос: почему после переезда на снапкит едет вёрстка у некоторых заголовков?
-            
-            descriptionLabel.snp.makeConstraints { make in
-               make.top.equalToSuperview().offset(0)
-                make.bottom.equalToSuperview().offset(0)
+        newsImageView.snp.makeConstraints { make in
+           make.top.equalToSuperview().offset(20)
+           make.leading.equalToSuperview().offset(20)
+           make.trailing.equalToSuperview().offset(-20)
+           make.height.equalTo(100)
+        }
 
-               make.leading.equalToSuperview().offset(20)
-               make.trailing.equalToSuperview().offset(-20)
-            }
-        
+        descriptionLabel.snp.makeConstraints { make in
+           make.top.equalTo(newsImageView.snp.bottom).offset(50)
+           make.leading.equalToSuperview().offset(20)
+           make.trailing.equalToSuperview().offset(-20)
+        }
+
+        articleLabel.snp.makeConstraints { make in
+            make.top.equalTo(descriptionLabel.snp.bottom).offset(15)
+            make.leading.equalToSuperview().offset(20)
+            make.trailing.bottom.equalToSuperview().offset(-20)
+
+        }
     }
     
 }

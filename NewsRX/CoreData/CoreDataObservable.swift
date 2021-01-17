@@ -56,26 +56,30 @@ class CoreDataObservable<T>: NSObject, ObservableType, NSFetchedResultsControlle
             
             return FetcherDisposable(fetcher: self, observer: observer)
     }
-//    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChangeContentWith diff: CollectionDifference<NSManagedObjectID>) {
-//        var insertedObjects: [T] = []
-//        for change in diff {
-//            switch change {
-//                case let .insert(offset, _, associatedWith):
-//                    if let _ = associatedWith {
-//                        break
-//                    } else {
-//                        print("INSERT", offset)
-//                        guard let managedObject = fetchedResultsController?.fetchedObjects?[offset] else { break }
-//                        insertedObjects.append(
-//                            managedObject as! T
-//                        )
-//                        results.onNext(insertedObjects)
-//                    }
-//                case .remove( _, _, _): break
-//            }
-//        }
-//        
-//    }
+    
+    // Попытка перехватывать изменения в fetchedObjects, чтобы в контролеер добавлять секцию с изменениями
+    // Но это выглядит как-то глупо и не работает :)
+    //
+    //    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChangeContentWith diff: CollectionDifference<NSManagedObjectID>) {
+    //        var insertedObjects: [T] = []
+    //        for change in diff {
+    //            switch change {
+    //                case let .insert(offset, _, associatedWith):
+    //                    if let _ = associatedWith {
+    //                        break
+    //                    } else {
+    //                        print("INSERT", offset)
+    //                        guard let managedObject = fetchedResultsController?.fetchedObjects?[offset] else { break }
+    //                        insertedObjects.append(
+    //                            managedObject as! T
+    //                        )
+    //                        results.onNext(insertedObjects)
+    //                    }
+    //                case .remove( _, _, _): break
+    //            }
+    //        }
+    //
+    //    }
     
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         let result = controller.fetchedObjects as? [T] ?? []
