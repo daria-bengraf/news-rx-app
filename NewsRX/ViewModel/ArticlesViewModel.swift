@@ -17,6 +17,7 @@ class ArticlesViewModel {
     var pageNum : Int = 0
     let countPerPage: Int = 20
     let disposeBag = DisposeBag()
+    public var isLoading: Bool = false
     
     init () {
         self.apiService
@@ -26,10 +27,12 @@ class ArticlesViewModel {
                 
                 self.pageNum += 1
                 print ("Load page \(self.pageNum)")
+                self.isLoading = true
                 ApiClient
                     .getPosts(page: self.pageNum)
                     .subscribe(onNext: { articlesModel in
                         CoreDataStack.instance.saveContext()
+                        self.isLoading = false
                     })
                     .disposed(by: self.disposeBag)
             })

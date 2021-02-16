@@ -1,44 +1,39 @@
 //
-//  ImageService.swift
+//  ArticleImageLoader.swift
 //  NewsRX
 //
-//  Created by Dariya Bengraf on 19.11.2020.
-//  Copyright © 2020 Dariya Bengraf. All rights reserved.
+//  Created by Dariya Bengraf on 14.02.2021.
+//  Copyright © 2021 Dariya Bengraf. All rights reserved.
 //
 
-import Alamofire
-import RxSwift
 import Foundation
+import Alamofire
 
-
-class ImageService {
+class ArticleImageLoader {
+    private lazy var AFManager: SessionManager = {
+        let configuration = URLSessionConfiguration.default
+        configuration.urlCredentialStorage = nil
+        configuration.timeoutIntervalForRequest = 100
+        configuration.httpMaximumConnectionsPerHost = 10
+        
+        return Alamofire.SessionManager(configuration: configuration)
+    }()
     
-    public func load (url: URL) -> Observable<Data> {
-        return Observable<Data>.create { observer in
-            // Попытка излечить ошибку HTTP load failed, 0/0 bytes (error code: -999 [1:89])
-            let configuration = URLSessionConfiguration.default
-            configuration.urlCredentialStorage = nil
-            configuration.timeoutIntervalForRequest = 100
-            configuration.httpMaximumConnectionsPerHost = 10
-            
-            let manager = Alamofire.SessionManager(configuration: configuration)
-            let request = manager
-                .request(url)
-                .validate()
-                .responseData{ response  in
-                    switch response.result {
-                    case .success(let responseData):
-                        observer.onNext(responseData)
-                        observer.onCompleted()
-                    case .failure(let error):
-                        observer.onError(error)
+    public func load (article: Article) -> Void {
+        guard let imageUrlString = article.urlToImage else { return }
+        guard let url = URL(string: imageUrlString) else { return }
+        AFManager
+            .request(url)
+            .responseData{ response  in
+                switch response.result {
+                case .success(let responseData):
+                    DispatchQueue.global(qos: .background).async {
+                        article.image = responseData
+                        CoreDataStack.instance.saveContext()
                     }
-            }
-            
-            return Disposables.create {
-                request.cancel()
-            }
+                case .failure(_):
+                    print("Image load failure...")
+                }
         }
-        .observeOn(MainScheduler.instance)
     }
 }

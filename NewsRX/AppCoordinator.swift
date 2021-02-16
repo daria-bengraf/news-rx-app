@@ -17,7 +17,7 @@ class AppCoordinator {
     
     func start() {
         window.makeKeyAndVisible()
-        let controller = NewsListTestController()
+        let controller = NewsListController()
 
         window.rootViewController = UINavigationController(rootViewController: controller)
     }

@@ -31,6 +31,12 @@ final class Article: NSManagedObject {
     @NSManaged public var text: String?
     @NSManaged public var urlToImage: String?
     @NSManaged public var image: Data?
+    @NSManaged public var author: String?
+    @NSManaged public var publishedAt: Date?
+    
+    @nonobjc static func fetchRequest() -> NSFetchRequest<Article> {
+        return NSFetchRequest<Article>(entityName: "Article")
+    }
 }
 
 extension Article: Mappable, Identifiable {
@@ -46,6 +52,11 @@ extension Article: Mappable, Identifiable {
         title <- map["title"]
         text <- map["description"]
         urlToImage <- map["urlToImage"]
+        author <- map["author"]
+                
+        if let publishedAtString = map["publishedAt"].currentValue as? String {
+            publishedAt = publishedAtString.toDate(withFormat: "yyyy-MM-DD'T'HH:mm:ss'Z'")
+        }
     }
 }
 

@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>APIKey</key>
-	<string>909aae49d39b48a2a1e03b0297423930</string>
+	<key>PreviewsEnabled</key>
+	<false/>
 </dict>
 </plist>
