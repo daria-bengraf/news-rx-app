@@ -52,7 +52,7 @@ struct URLcostants {
     }
     
     enum Sources: String {
-        case crypto = "crypto-coins-news"
+        case crypto = "cnn"
     }
 }
 

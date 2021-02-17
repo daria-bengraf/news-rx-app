@@ -10,17 +10,16 @@ import UIKit
 import RxSwift
 import RxCocoa
 import CoreData
+import SnapKit
 
-class NewsListController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIScrollViewDelegate  {
+class NewsListController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIScrollViewDelegate, NSFetchedResultsControllerDelegate  {
     
     let disposeBag = DisposeBag()
     
     private let reuseIdentifier = "Cell"
     private var articlesViewModel = ArticlesViewModel()
-    private var articlesSections  = [ArticlesSection]()
-    private var isLoading = false
-    
-    
+    private var articleImageLoader = ArticleImageLoader()
+
     var mainScrollView: UIScrollView = {
         let mainScrollView = UIScrollView()
         mainScrollView.backgroundColor = .black
@@ -30,43 +29,94 @@ class NewsListController: UIViewController, UITableViewDataSource, UITableViewDe
     }()
     
     
+    // MARK: - FRC
+    private lazy var fetchedResultsController: NSFetchedResultsController<Article> = {
+        let fetchRequest: NSFetchRequest<Article> = Article.fetchRequest()
+        
+        let nameSortDescriptor = NSSortDescriptor(key: "id", ascending: true)
+        fetchRequest.sortDescriptors = [nameSortDescriptor]
+        
+        let frc = NSFetchedResultsController(
+            fetchRequest: fetchRequest,
+            managedObjectContext: CoreDataStack.instance.managedContext,
+            sectionNameKeyPath: "id",
+            cacheName: nil
+        )
+        frc.delegate = self
+        return frc
+    }()
+    
+    
+    // MARK: - Fetched Results Controller Delegate -
+    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        tableView.beginUpdates()
+    }
+    
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        tableView.endUpdates()
+    }
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        
+        switch type {
+        case .insert:
+            guard let newIndexPath = newIndexPath else { return }
+            tableView.insertRows(at: [newIndexPath], with: .bottom)
+        default: return
+        }
+    }
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange sectionInfo: NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
+        
+        let section = IndexSet(integer: sectionIndex)
+        
+        switch type {
+        case .delete:
+            tableView.deleteSections(section, with: .automatic)
+        case .insert:
+            tableView.insertSections(section, with: .bottom)
+        default: break
+            
+        }
+    }
+    
+    // MARK: - TableViewDatasource
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return fetchedResultsController.sections?.count ?? 0
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        guard let sectionInfo = fetchedResultsController.sections?[section] else { return 0 }
+        return sectionInfo.numberOfObjects
+        
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)as? NewsCell else {
+            fatalError("Wrong cell type dequeued")
+        }
+        let article = fetchedResultsController.object(at: indexPath)
+        
+        cell.descriptionLabel.text = article.title
+        cell.articleLabel.text = article.text
+        cell.publishedAt.text = article.publishedAt?.toString()
+                
+        if (article.image != nil) {
+            cell.newsImageView.image = UIImage(data: article.image!)
+        } else {
+            DispatchQueue.global(qos: .background).async {
+                self.articleImageLoader.load(article: article)
+            }
+        }
+        
+        return cell
+    }
+    
     let tableView : UITableView = {
         let tableView = UITableView(frame: .zero, style: .plain)
         tableView.isScrollEnabled = true
         return tableView;
     }()
-    
-    
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return articlesSections.count
-    }
-    
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return articlesSections[section].articleViewModels.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard  let cell =  tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as? NewsCell else { fatalError("no cell")}
-        let section = self.articlesSections[indexPath.section]
-        let articleVM = section.articleViewModels[indexPath.row]
-        
-        articleVM.title.asDriver(onErrorJustReturn:"")
-            .drive(cell.descriptionLabel.rx.text)
-            .disposed(by: disposeBag)
-        
-        articleVM.text.asDriver(onErrorJustReturn:"")
-            .drive(cell.articleLabel.rx.text)
-            .disposed(by: disposeBag)
-       
-        articleVM.image.asDriver(onErrorJustReturn: UIImage())
-            .drive(cell.newsImageView.rx.image)
-            .disposed(by: disposeBag)
-        
-        articleVM.imageProvider.onNext(articleVM.articleModel.image)
-        
-        return cell
-    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -76,18 +126,12 @@ class NewsListController: UIViewController, UITableViewDataSource, UITableViewDe
         self.mainScrollView.delegate = self
         self.tableView.delegate = self
         setupViews()
+        do {
+            try fetchedResultsController.performFetch()
+        } catch {
+            fatalError("Core Data fetch error")
+        }
         
-        articlesViewModel
-            .articlesVM
-            .observeOn(MainScheduler.instance)
-            .bind(onNext: { (articlesSections: [ArticlesSection]) -> Void in
-                self.articlesSections = articlesSections
-                self.reloadTableView()
-                self.isLoading = false
-            })
-            .disposed(by: disposeBag)
-        
-        articlesViewModel.coreDataService.onNext(())
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
@@ -95,44 +139,48 @@ class NewsListController: UIViewController, UITableViewDataSource, UITableViewDe
         let contentYoffset = scrollView.contentOffset.y
         let distanceToBottom = scrollView.contentSize.height - contentYoffset - height
         
-        if (distanceToBottom < height) && !isLoading {
-            isLoading = true
-            self.articlesViewModel.apiService.onNext(())
+        if (distanceToBottom < height) && !articlesViewModel.isLoading {
+            let currentCount = fetchedResultsController.fetchedObjects?.count ?? 0
+            articlesViewModel.pageNum = currentCount / articlesViewModel.countPerPage
+            articlesViewModel.apiService.onNext(())
         }
     }
     
-    private func reloadTableView(){
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-        }
-    }
+//    private func reloadTableView(){
+//        DispatchQueue.main.async {
+//            self.tableView.reloadData()
+//        }
+//    }
     
     
     private func setupViews() {
-        self.navigationItem.title = "Crypto News"
+        navigationItem.title = "Crypto News"
         view.addSubview(mainScrollView)
         view.addSubview(tableView)
-        addConstraints ()
+        addConstraints()
         
-        self.updateLayout(with: self.view.frame.size)
+        updateLayout(with: self.view.frame.size)
     }
     
     private func updateLayout(with size: CGSize) {
-       self.tableView.frame = CGRect.init(origin: .zero, size: size)
+        tableView.frame = CGRect.init(origin: .zero, size: size)
     }
     
     private func addConstraints () {
-        mainScrollView.translatesAutoresizingMaskIntoConstraints = false
-        mainScrollView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
-        mainScrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
-        mainScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        mainScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
-        tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
-        tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        mainScrollView.snp.makeConstraints { make in
+            make.top.equalToSuperview()
+            make.bottom.equalToSuperview()
+            make.left.equalToSuperview()
+            make.right.equalToSuperview()
+        }
+        
+        tableView.snp.makeConstraints { make in
+            make.top.equalToSuperview()
+            make.left.equalToSuperview()
+            make.right.equalToSuperview()
+            make.bottom.equalToSuperview()
+        }
     }
     
 }

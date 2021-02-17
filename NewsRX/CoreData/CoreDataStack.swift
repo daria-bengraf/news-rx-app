@@ -19,13 +19,19 @@ public class CoreDataStack {
         return CoreDataStack(modelName: "NewsRX")
     }()
     
-   init(modelName: String,  usesFatalError: Bool = false) {
+    init(modelName: String,  usesFatalError: Bool = false) {
         self.modelName = modelName
         self.usesFatalError = usesFatalError
     }
     
     public lazy var managedContext: NSManagedObjectContext = {
         return self.storeContainer.viewContext
+    }()
+    
+    public lazy var childManagedObjectContext: NSManagedObjectContext = {
+        var context = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
+        context.parent = managedContext
+        return context
     }()
     
     private lazy var storeContainer: NSPersistentContainer = {
@@ -51,57 +57,28 @@ public class CoreDataStack {
         }
     }
     
-    public  func fetch<T: NSManagedObject>(_ fetchRequest: NSFetchRequest<T>, ofType _: T.Type, async: Bool = true, completion: @escaping (Result<[T], Error>) -> ()) {
-        
-        if async {
+    
+    public func saveBackground(completion: @escaping (Result<Bool, Error>) -> () = {_ in}) {
+        guard childManagedObjectContext.hasChanges else { return }
+        childManagedObjectContext.perform {
             
-            let asyncFetchRequest = NSAsynchronousFetchRequest<T>(fetchRequest: fetchRequest) { (result: NSAsynchronousFetchResult) in
-                
-                guard let finalResult = result.finalResult else {
-                    self.handle(CoreDataStackError.noFinalResult) {
-                        completion(.failure(CoreDataStackError.noFinalResult))
+            do {
+                try self.childManagedObjectContext.save()
+                self.managedContext.performAndWait {
+                    do {
+                        try self.managedContext.save()
+                    } catch {
+                        fatalError("Failure to save context: \(error)")
                     }
-                    return
                 }
-                completion(.success(finalResult))
+            } catch {
+                fatalError("Failure to save context: \(error)")
             }
-            
-            do {
-                try managedContext.execute(asyncFetchRequest)
-            } catch let error as NSError {
-                handle(error) {
-                    completion(.failure(error))
-                }
-            }
-            
-        } else {
-            
-            do {
-                let result = try managedContext.fetch(fetchRequest)
-                completion(.success(result))
-            } catch let error as NSError {
-                handle(error) {
-                    completion(.failure(error))
-                }
-            }
-            
         }
+        
     }
     
-    public func fetch<T: NSManagedObject>(entityName: String, ofType _: T.Type, async: Bool = true, completion: @escaping (Result<[T], Error>) -> ()) {
-        let fetchRequest = NSFetchRequest<T>(entityName: entityName)
-        fetch(fetchRequest, ofType: T.self, async: async, completion: completion)
-    }
     
-    public func fetch<T: NSManagedObject>(requestName: String, ofType _: T.Type, async: Bool = true, completion: @escaping (Result<[T], Error>) -> ()) {
-        guard let fetchRequest = managedContext.persistentStoreCoordinator?.managedObjectModel.fetchRequestTemplate(forName: requestName) as? NSFetchRequest<T> else {
-            self.handle(CoreDataStackError.noFetchRequest) {
-                completion(.failure(CoreDataStackError.noFetchRequest))
-            }
-            return
-        }
-        fetch(fetchRequest, ofType: T.self, async: async, completion: completion)
-    }
     
     private func handle(_ error: Error?, completion: @escaping () -> () = {}) {
         if let error = error as NSError? {

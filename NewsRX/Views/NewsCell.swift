@@ -7,14 +7,22 @@
 //
 
 import UIKit
+import SnapKit
 
 class NewsCell: UITableViewCell {
     
     let descriptionLabel:UILabel = {
         let description = UILabel()
-        description.font = UIFont.boldSystemFont(ofSize: 20.0)
+        description.font = UIFont.boldSystemFont(ofSize: 14.0)
         description.numberOfLines = 0
         return description
+    }()
+    
+    let publishedAt:UILabel = {
+        let label = UILabel()
+        label.font = UIFont.boldSystemFont(ofSize: 14.0)
+        label.numberOfLines = 0
+        return label
     }()
     
     let articleLabel:UILabel = {
@@ -26,7 +34,7 @@ class NewsCell: UITableViewCell {
     
     var newsImageView: UIImageView = {
         let iv =  UIImageView()
-        iv.contentMode = .scaleAspectFill
+        iv.contentMode = .scaleAspectFit
         let data = #imageLiteral(resourceName: "placeholder").pngData()!
         iv.image = UIImage(data: data)
         return iv
@@ -36,9 +44,9 @@ class NewsCell: UITableViewCell {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         self.backgroundColor = .white
         addSubview(descriptionLabel)
+        addSubview(publishedAt)
         addSubview(articleLabel)
         addSubview(newsImageView)
-        
         addConstraints()
     }
     
@@ -47,22 +55,34 @@ class NewsCell: UITableViewCell {
     }
     
     func addConstraints() {
-        newsImageView.translatesAutoresizingMaskIntoConstraints = false
-        newsImageView.topAnchor.constraint(equalTo: topAnchor, constant: 20).isActive = true
-        newsImageView.leftAnchor.constraint(equalTo: leftAnchor, constant: 20).isActive = true
-        newsImageView.rightAnchor.constraint(equalTo: rightAnchor, constant: -20).isActive = true
-        newsImageView.heightAnchor.constraint(equalToConstant: 200).isActive = true
-
-        descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
-        descriptionLabel.topAnchor.constraint(equalTo: newsImageView.bottomAnchor, constant: 50).isActive = true
-        descriptionLabel.leftAnchor.constraint(equalTo: leftAnchor,  constant: 20).isActive = true
-        descriptionLabel.rightAnchor.constraint(equalTo: rightAnchor, constant: -20).isActive = true
         
-        articleLabel.translatesAutoresizingMaskIntoConstraints = false
-        articleLabel.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 15).isActive = true
-        articleLabel.leftAnchor.constraint(equalTo: leftAnchor,  constant: 20).isActive = true
-        articleLabel.rightAnchor.constraint(equalTo: rightAnchor, constant: -20).isActive = true
-        articleLabel.bottomAnchor.constraint(equalTo: bottomAnchor,  constant: -20).isActive = true
+        newsImageView.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(20)
+            make.leading.equalToSuperview().offset(20)
+            make.trailing.equalToSuperview().offset(-20)
+            make.height.equalTo(200)
+        }
+        
+        descriptionLabel.snp.makeConstraints { make in
+            make.top.equalTo(newsImageView.snp.bottom).offset(50)
+            make.leading.equalToSuperview().offset(20)
+            make.trailing.equalToSuperview().offset(-20)
+        }
+        
+        
+        articleLabel.snp.makeConstraints { make in
+            make.top.equalTo(descriptionLabel.snp.bottom).offset(15)
+            make.leading.equalToSuperview().offset(20)
+            make.trailing.equalToSuperview().offset(-20)
+        }
+        
+        publishedAt.snp.makeConstraints { make in
+            make.top.equalTo(articleLabel.snp.bottom).offset(50)
+            make.leading.equalToSuperview().offset(20)
+            make.trailing.equalToSuperview().offset(-20)
+            make.bottom.equalToSuperview().offset(-20)
+        }
+        
     }
     
 }

@@ -38,6 +38,7 @@ class ApiClient {
                         observer.onNext(model)
                         observer.onCompleted()
                     case .failure(let error):
+                        print("Could not load news")
                         switch response.response?.statusCode {
                         case 403:
                             observer.onError(ApiError.forbidden)
