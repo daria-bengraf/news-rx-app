@@ -25,13 +25,16 @@ class ArticlesViewModel {
             .subscribe(onNext: {[weak self] _ in
                 guard let self = self else { return }
                 
+                if (self.isLoading) {
+                    return
+                }
                 self.pageNum += 1
                 print ("Load page \(self.pageNum)")
                 self.isLoading = true
                 ApiClient
                     .getPosts(page: self.pageNum)
                     .subscribe(onNext: { articlesModel in
-                        CoreDataStack.instance.saveContext()
+                        CoreDataStack.instance.saveBackground()
                         self.isLoading = false
                     })
                     .disposed(by: self.disposeBag)

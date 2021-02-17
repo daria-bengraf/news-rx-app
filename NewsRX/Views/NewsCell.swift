@@ -34,10 +34,9 @@ class NewsCell: UITableViewCell {
     
     var newsImageView: UIImageView = {
         let iv =  UIImageView()
-        iv.contentMode = .scaleAspectFill
+        iv.contentMode = .scaleAspectFit
         let data = #imageLiteral(resourceName: "placeholder").pngData()!
         iv.image = UIImage(data: data)
-        iv.contentMode = .scaleAspectFill
         return iv
     }()
     
@@ -62,7 +61,6 @@ class NewsCell: UITableViewCell {
             make.leading.equalToSuperview().offset(20)
             make.trailing.equalToSuperview().offset(-20)
             make.height.equalTo(200)
-            
         }
         
         descriptionLabel.snp.makeConstraints { make in

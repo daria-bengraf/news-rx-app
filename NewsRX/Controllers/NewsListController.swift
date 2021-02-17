@@ -33,13 +33,13 @@ class NewsListController: UIViewController, UITableViewDataSource, UITableViewDe
     private lazy var fetchedResultsController: NSFetchedResultsController<Article> = {
         let fetchRequest: NSFetchRequest<Article> = Article.fetchRequest()
         
-        let nameSortDescriptor = NSSortDescriptor(key: "publishedAt", ascending: false)
+        let nameSortDescriptor = NSSortDescriptor(key: "id", ascending: true)
         fetchRequest.sortDescriptors = [nameSortDescriptor]
         
         let frc = NSFetchedResultsController(
             fetchRequest: fetchRequest,
             managedObjectContext: CoreDataStack.instance.managedContext,
-            sectionNameKeyPath: "uuid",
+            sectionNameKeyPath: "id",
             cacheName: nil
         )
         frc.delegate = self
@@ -62,14 +62,6 @@ class NewsListController: UIViewController, UITableViewDataSource, UITableViewDe
         case .insert:
             guard let newIndexPath = newIndexPath else { return }
             tableView.insertRows(at: [newIndexPath], with: .bottom)
-        case .delete:
-            guard let indexPath = indexPath else { return }
-            tableView.deleteRows(at: [indexPath], with: .automatic)
-        case .update:
-            self.tableView.reloadRows(at: [indexPath!], with: .bottom)
-        case .move:
-            guard let indexPath = indexPath, let newIndexPath = newIndexPath else { return }
-            tableView.moveRow(at: indexPath, to: newIndexPath)
         default: return
         }
     }
@@ -83,8 +75,6 @@ class NewsListController: UIViewController, UITableViewDataSource, UITableViewDe
             tableView.deleteSections(section, with: .automatic)
         case .insert:
             tableView.insertSections(section, with: .bottom)
-        case .update:
-            tableView.reloadSections(section, with: .automatic)
         default: break
             
         }
@@ -114,7 +104,7 @@ class NewsListController: UIViewController, UITableViewDataSource, UITableViewDe
         if (article.image != nil) {
             cell.newsImageView.image = UIImage(data: article.image!)
         } else {
-            DispatchQueue.global(qos: .default).async {
+            DispatchQueue.global(qos: .background).async {
                 self.articleImageLoader.load(article: article)
             }
         }
@@ -156,11 +146,11 @@ class NewsListController: UIViewController, UITableViewDataSource, UITableViewDe
         }
     }
     
-    private func reloadTableView(){
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-        }
-    }
+//    private func reloadTableView(){
+//        DispatchQueue.main.async {
+//            self.tableView.reloadData()
+//        }
+//    }
     
     
     private func setupViews() {

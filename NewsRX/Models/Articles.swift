@@ -26,6 +26,7 @@ class Articles: Mappable{
 @objc(Article)
 final class Article: NSManagedObject {
     
+    @NSManaged public var id: Int64
     @NSManaged public var uuid: UUID
     @NSManaged public var title: String?
     @NSManaged public var text: String?
@@ -41,11 +42,13 @@ final class Article: NSManagedObject {
 
 extension Article: Mappable, Identifiable {
     public convenience init?(map: Map) {
-        let context = CoreDataStack.instance.managedContext
+        //let context = CoreDataStack.instance.managedContext
+        let context = CoreDataStack.instance.childManagedObjectContext
         let entity = NSEntityDescription.entity(forEntityName: "Article", in: context)
 
         self.init(entity: entity!, insertInto: context)
         self.uuid = UUID()
+        self.id = Date().millisecondsSince1970
     }
     
     public func mapping(map: Map) {

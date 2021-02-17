@@ -28,6 +28,12 @@ public class CoreDataStack {
         return self.storeContainer.viewContext
     }()
     
+    public lazy var childManagedObjectContext: NSManagedObjectContext = {
+        var context = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
+        context.parent = managedContext
+        return context
+    }()
+    
     private lazy var storeContainer: NSPersistentContainer = {
         
         let container = NSPersistentContainer(name: self.modelName)
@@ -51,7 +57,28 @@ public class CoreDataStack {
         }
     }
     
-
+    
+    public func saveBackground(completion: @escaping (Result<Bool, Error>) -> () = {_ in}) {
+        guard childManagedObjectContext.hasChanges else { return }
+        childManagedObjectContext.perform {
+            
+            do {
+                try self.childManagedObjectContext.save()
+                self.managedContext.performAndWait {
+                    do {
+                        try self.managedContext.save()
+                    } catch {
+                        fatalError("Failure to save context: \(error)")
+                    }
+                }
+            } catch {
+                fatalError("Failure to save context: \(error)")
+            }
+        }
+        
+    }
+    
+    
     
     private func handle(_ error: Error?, completion: @escaping () -> () = {}) {
         if let error = error as NSError? {

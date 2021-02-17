@@ -9,6 +9,7 @@
 import Foundation
 import Alamofire
 
+
 class ArticleImageLoader {
     private lazy var AFManager: SessionManager = {
         let configuration = URLSessionConfiguration.default
@@ -27,9 +28,10 @@ class ArticleImageLoader {
             .responseData{ response  in
                 switch response.result {
                 case .success(let responseData):
+                    
+                    article.image = responseData
                     DispatchQueue.global(qos: .background).async {
-                        article.image = responseData
-                        CoreDataStack.instance.saveContext()
+                        CoreDataStack.instance.saveBackground()
                     }
                 case .failure(_):
                     print("Image load failure...")
