@@ -28,6 +28,7 @@ class NewsCell: UITableViewCell {
     let articleLabel:UILabel = {
         let articleLabel = UILabel()
         articleLabel.setContentCompressionResistancePriority(UILayoutPriority(rawValue: 1000), for: NSLayoutConstraint.Axis.vertical)
+        articleLabel.numberOfLines = 0
         return articleLabel
     }()
     
@@ -36,7 +37,7 @@ class NewsCell: UITableViewCell {
         iv.contentMode = .scaleAspectFill
         let data = #imageLiteral(resourceName: "placeholder").pngData()!
         iv.image = UIImage(data: data)
-        iv.contentMode = .scaleToFill
+        iv.contentMode = .scaleAspectFill
         return iv
     }()
     
@@ -60,7 +61,8 @@ class NewsCell: UITableViewCell {
             make.top.equalToSuperview().offset(20)
             make.leading.equalToSuperview().offset(20)
             make.trailing.equalToSuperview().offset(-20)
-            make.height.equalTo(100)
+            make.height.equalTo(200)
+            
         }
         
         descriptionLabel.snp.makeConstraints { make in
@@ -73,6 +75,7 @@ class NewsCell: UITableViewCell {
         articleLabel.snp.makeConstraints { make in
             make.top.equalTo(descriptionLabel.snp.bottom).offset(15)
             make.leading.equalToSuperview().offset(20)
+            make.trailing.equalToSuperview().offset(-20)
         }
         
         publishedAt.snp.makeConstraints { make in
